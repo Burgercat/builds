@@ -1,24 +1,34 @@
-name: fastbuild ubi2-oc, ubi2, snapshot
+name: fastbuild ubi2-oc, ubi2
 on: workflow_dispatch
 permissions: write-all
 jobs:
   build:
     name: Build ${{ matrix.target }}
     runs-on: ubuntu-24.04-arm
-    strategy: {fail-fast: false, matrix: {target: [ubi2-oc, ubi2, SNAPSHOT]}}
+    strategy: {fail-fast: false, matrix: {target: [ubi2-oc, ubi2]}}
     env:
       DK_OPENWRT: /bld/openwrt
       DK_BIN: /bld/openwrt_bin
       DK_USER: /bld/user
       DK_PROFILE: /bld/user/current
       GH_TOKEN: ${{ github.token }}
-      IMG_INC: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ matrix.target }}-inc
     steps:
     - uses: actions/checkout@v7
 
     - uses: docker/login-action@v4
       with: {registry: ghcr.io, username: '${{ github.actor }}', password: '${{ github.token }}'}
+    
+    - name: Sanitize repo slug
+      id: repo_slug
+      uses: actions/github-script@v8
+      with:
+        result-encoding: string
+        script: |
+          return `ghcr.io/${context.repo.owner}/${context.repo.repo}`.toLowerCase()
 
+    - name: Set lowercase image env
+      run: echo "IMG_INC=${{ steps.repo_slug.outputs.result }}:${{ matrix.target }}-inc" >> $GITHUB_ENV
+      
     - id: gh
       uses: actions/cache/restore@v5
       with: {path: "ghcache\nstcache", key: 'cache-${{ matrix.target }}.${{ github.run_id }}', restore-keys: 'cache-${{ matrix.target }}.'}
