@@ -85,7 +85,7 @@ jobs:
           cp -r $bp/files/ . &>/dev/null ||:
           bash $bp/custom.sh &>/dev/null ||:
           make defconfig
-          yes "" | make menuconfig
+          yes "" | make oldconfig
           make defconfig; echo "CONFIG_VERSION_NUMBER=${{ matrix.target }}" >> .config
           make download -j8 2>&1 | tee /dev/stderr | grep -q "ERROR:" || [ $PIPESTATUS -ne 0 ] && exit 1 ||:
         '
